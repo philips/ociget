@@ -1,0 +1,16 @@
+#!/bin/bash
+
+url=$1
+base=$(dirname $url)
+
+manifests=$(curl -s -H "Accept: application/vnd.oci.image.manifest.list.v1+json" \
+	$1 | tee temp | jq -r .manifests[].digest)
+
+hash=sha256:$(openssl dgst -sha256 image/manifest-list  | awk '{print $2}')
+echo stored manifest $hash
+mv temp "store/$hash"
+
+for i in $manifests; do
+	echo fetching manifest $i
+	curl -s $base/$i > store/$i
+done
